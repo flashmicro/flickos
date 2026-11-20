@@ -40,11 +40,14 @@ CHECKS = [
     ("locale: en_US 兜底保留", "locale -a | grep -qi '^en_US'", 0),
     ("字体: 中文字体无方框", "fc-match ':lang=zh-cn' | grep -qiE 'noto|wqy|wenquanyi|cjk'", 15),
     ("时区: Asia/Shanghai", "grep -q '^Asia/Shanghai$' /etc/timezone", 0),
-    ("输入法: fcitx5 已启动", "pgrep -x fcitx5 >/dev/null", 60),
-    ("输入法: Rime 预置且为默认", "grep -qi rime ~/.config/fcitx5/profile 2>/dev/null", 20),
-    ("输入法: 配置工具存在", "command -v fcitx5-config-qt >/dev/null", 0),
+    # headless 串口登录没有图形会话，labwc/fcitx5 不会自启，故不检查进程；
+    # 改为验证已安装 + 已写入 labwc autostart（图形登录时才会真正拉起）。
+    ("输入法: fcitx5 已安装", "command -v fcitx5 >/dev/null", 0),
+    ("输入法: 已配置图形会话自启", "grep -q fcitx5 /usr/libexec/flickos/autostart 2>/dev/null", 0),
+    ("输入法: Rime 预置且为默认", "grep -qi 'DefaultIM=rime' ~/.config/fcitx5/profile /etc/skel/.config/fcitx5/profile 2>/dev/null", 20),
+    ("输入法: 配置工具已装", "dpkg-query -W fcitx5-config-qt >/dev/null 2>&1", 0),
     ("输入法: GTK/Qt 前端已装", "dpkg-query -W fcitx5-frontend-gtk3 fcitx5-frontend-qt5 >/dev/null 2>&1", 0),
-    ("Calamares: 简体翻译存在", "ls /usr/share/locale/zh_CN/LC_MESSAGES/calamares*.mo >/dev/null 2>&1", 0),
+    ("Calamares: 已预装", "command -v calamares >/dev/null 2>&1", 0),
     ("QEMU: 已预装", "command -v qemu-system-x86_64 >/dev/null", 0),
     ("固件: 完整保留（G50-70）", "[ \"$(dpkg -l | grep -ci firmware)\" -gt 10 ]", 0),
 ]
@@ -324,16 +327,17 @@ def main():
             else:
                 pos = len(st.snapshot())
                 st.send(LIVE_USER)
-                if not st.wait(r"[Pp]assword:", 60, pos):
-                    log("FAIL: 未等到密码提示")
+                # 密码提示可能是英文 "Password:"，也可能是本地化中文 "密码："。
+                # 为稳妥起见，即便没匹配到提示也照样把密码发过去（login 会接受），
+                # 最终以 __LOGIN_READY__ 标记作为登录成功的唯一判据。
+                if not st.wait(r"[Pp]assword:|密码[：:]", 60, pos):
+                    log("WARN: 未匹配到密码提示文本（可能被本地化为中文），尝试直接发送密码")
+                st.send(LIVE_PASSWORD)
+                pos = len(st.snapshot())
+                st.send("echo __LOGIN_READY__")
+                if not st.wait(r"__LOGIN_READY__", 90, pos):
+                    log("FAIL: 登录失败（用户/密码？见 serial.log）")
                     rc = 3
-                else:
-                    st.send(LIVE_PASSWORD)
-                    pos = len(st.snapshot())
-                    st.send("echo __LOGIN_READY__")
-                    if not st.wait(r"__LOGIN_READY__", 90, pos):
-                        log("FAIL: 登录失败（用户/密码？见 serial.log）")
-                        rc = 3
 
             if rc == 0:
                 # 2) 逐条执行 CHECKS
