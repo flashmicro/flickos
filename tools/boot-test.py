@@ -363,10 +363,12 @@ def main():
                 seq = 0
                 for desc, cmd, retry in CHECKS:
                     seq += 1
-                    marker = "__FCKCHK%d__" % seq
+                    # marker 用双引号 echo，让 $? 展开成数字；单引号会输出字面量
+                    # "$?" 导致永远匹配不到（曾使全部 CHECK 误报 FAIL）。
+                    marker = "__FCKCHK%d_" % seq  # 单下划线结尾 + 数字 = 完整标记
                     wait_s = retry * scale
                     start = len(st.snapshot())
-                    st.send("%s; __rc=$?; echo '%s$__rc'" % (cmd, marker))
+                    st.send("%s; echo \"%s$?\"" % (cmd, marker))
                     m = st.wait(re.escape(marker) + r"(\d+)", max(20, wait_s), start)
                     if m and int(m.group(1)) == 0:
                         log("PASS: " + desc)
