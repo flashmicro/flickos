@@ -16,10 +16,25 @@ if [ -f /etc/timezone ]; then
     fi
 fi
 
-# 3) 首次部署 Rime：为 root 与 skel 用户生成默认的词库缓存。
-# 用户首次登录时 fcitx5 会按需自行部署，这里预置避免首次卡顿。
-if command -v rime_deployer >/dev/null 2>&1; then
-    echo "cn-l10n: rime deployer present (user will deploy on first login)"
+# 3) 预编译 Rime 词库到 skel（关键：不能只依赖首次登录自动部署）。
+#    只放 default.custom.yaml 而不预编译的话，在受限输入环境（如安卓虚拟机/
+#    无 GPU 的串口会话）里 fcitx5 首次部署可能失败，表现为托盘能切到中文、
+#    但候选框只显示 schema 缩写、打不出汉字。这里在构建阶段就把 schema 与
+#    词典编译成 build/ 下的 .bin，用户首次登录直接可用，无需再部署。
+if command -v rime_deployer >/dev/null 2>&1 && [ -d /usr/share/rime-data ]; then
+    echo "cn-l10n: pre-building Rime dictionary into skel"
+    RIME_SKEL="/etc/skel/.local/share/fcitx5/rime"
+    RIME_STAGE="$(mktemp -d /tmp/rime-skel.XXXXXX)"
+    if rime_deployer --build "$RIME_SKEL" /usr/share/rime-data "$RIME_STAGE" >/dev/null 2>&1; then
+        rm -rf "$RIME_SKEL/build"
+        mv "$RIME_STAGE" "$RIME_SKEL/build"
+        echo "cn-l10n: Rime dictionary pre-built into $RIME_SKEL/build"
+    else
+        echo "cn-l10n: WARNING - rime_deployer pre-build failed; will rely on first-login deploy" >&2
+    fi
+    rm -rf "$RIME_STAGE" 2>/dev/null || true
+else
+    echo "cn-l10n: WARNING - rime_deployer or /usr/share/rime-data missing; skip pre-build" >&2
 fi
 
 # 4) 精确裁剪本地化文件：只删非 zh/en 的 .mo 翻译、非中英 man 页、多余拼写字典。
