@@ -74,15 +74,35 @@ def main():
         return 2
 
     lib = ctypes.CDLL(libpath)
-    lib.RimeSetup.argtypes = [POINTER(RimeTraits)]
-    lib.RimeInitialize.argtypes = [POINTER(RimeTraits)]
-    lib.RimeCreateSession.restype = c_void_p
-    lib.RimeProcessKey.argtypes = [c_void_p, c_uint, c_uint]
-    lib.RimeProcessKey.restype = c_bool
-    lib.RimeGetCommit.argtypes = [c_void_p, POINTER(RimeCommit)]
-    lib.RimeGetCommit.restype = c_bool
-    lib.RimeDestroySession.argtypes = [c_void_p]
-    lib.RimeFinalize.argtypes = []
+
+    # librime <=1.10 用 extern "C" 导出（符号名 RimeSetup）；
+    # 1.13+ 去掉 extern "C"，符号被 C++ mangle（如 _Z9RimeSetupP13rime_traits_t）。
+    # 两套名字都试，兼容各版本。
+    MANGLED = {
+        "RimeSetup": "_Z9RimeSetupP13rime_traits_t",
+        "RimeInitialize": "_Z14RimeInitializeP13rime_traits_t",
+        "RimeCreateSession": "_Z17RimeCreateSessionv",
+        "RimeProcessKey": "_Z14RimeProcessKeymii",
+        "RimeGetCommit": "_Z13RimeGetCommitmP13rime_commit_t",
+        "RimeDestroySession": "_Z18RimeDestroySessionm",
+        "RimeFinalize": "_Z12RimeFinalizev",
+    }
+
+    def api(name):
+        try:
+            return getattr(lib, name)          # 旧版 extern "C"
+        except AttributeError:
+            return getattr(lib, MANGLED[name])  # 新版 C++ mangled
+
+    api("RimeSetup").argtypes = [POINTER(RimeTraits)]
+    api("RimeInitialize").argtypes = [POINTER(RimeTraits)]
+    api("RimeCreateSession").restype = c_void_p
+    api("RimeProcessKey").argtypes = [c_void_p, c_uint, c_uint]
+    api("RimeProcessKey").restype = c_bool
+    api("RimeGetCommit").argtypes = [c_void_p, POINTER(RimeCommit)]
+    api("RimeGetCommit").restype = c_bool
+    api("RimeDestroySession").argtypes = [c_void_p]
+    api("RimeFinalize").argtypes = []
 
     # 全新临时目录，模拟用户首次登录时 Rime 的自动部署
     userdir = tempfile.mkdtemp(prefix="rime-test-")
@@ -127,16 +147,16 @@ def main():
     print(f"[env] librime: {libpath}")
     print(f"[env] shared data: {shared}")
     print(f"[env] user data:  {rime_dir}")
-    lib.RimeSetup(byref(t))
-    lib.RimeInitialize(byref(t))  # 首次会自动部署 schema
-    sess = lib.RimeCreateSession()
+    api("RimeSetup")(byref(t))
+    api("RimeInitialize")(byref(t))  # 首次会自动部署 schema
+    sess = api("RimeCreateSession")()
 
     def commits():
         out = []
         while True:
             c = RimeCommit()
             c.data_size = ctypes.sizeof(RimeCommit)
-            if lib.RimeGetCommit(sess, byref(c)) and c.text:
+            if api("RimeGetCommit")(sess, byref(c)) and c.text:
                 out.append(c.text.decode("utf-8", "replace"))
             else:
                 break
@@ -144,10 +164,10 @@ def main():
 
     text = ""
     for ch in args.input:
-        lib.RimeProcessKey(sess, ord(ch), 0)
+        api("RimeProcessKey")(sess, ord(ch), 0)
         text += "".join(commits())
     text += "".join(commits())
-    lib.RimeProcessKey(sess, 0x20, 0)          # 空格：选第一个候选
+    api("RimeProcessKey")(sess, 0x20, 0)          # 空格：选第一个候选
     text += "".join(commits())
 
     print(f"[input]  {args.input}")
@@ -155,8 +175,8 @@ def main():
     ok = has_chinese(text)
     print("RESULT:", "PASS — 中文可正常上屏 ✅" if ok else "FAIL — 未上屏中文 ❌")
 
-    lib.RimeDestroySession(sess)
-    lib.RimeFinalize()
+    api("RimeDestroySession")(sess)
+    api("RimeFinalize")()
     if not args.keep:
         shutil.rmtree(userdir, ignore_errors=True)
     else:
