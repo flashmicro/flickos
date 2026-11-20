@@ -137,63 +137,83 @@ def xorriso_cat(iso, path):
     return r.stdout.decode("utf-8", errors="replace") if r.returncode == 0 else ""
 
 
+def xorriso_list(iso):
+    """列出 ISO 内所有普通文件的完整路径。"""
+    r = subprocess.run(
+        ["xorriso", "-indev", iso, "-find", "/", "-type", "f", "-print"],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    )
+    paths = []
+    for line in r.stdout.decode("utf-8", errors="replace").splitlines():
+        line = line.strip()
+        # xorriso 可能输出 "--path--" 之类标记行，只取以 / 开头的路径。
+        if line.startswith("/"):
+            paths.append(line)
+    return paths
+
+
+# 兜底 cmdline：FlickOS auto/config 里 --bootappend-live 的已知值（去掉 quiet splash）。
+# 即使 cfg 解析失败也能引导。真实值优先从 ISO 的 cfg 里提取。
+FALLBACK_APPEND = ("boot=live components username=user hostname=flickos "
+                   "locales=zh_CN.UTF-8 timezone=Asia/Shanghai")
+
+
 def extract_boot(iso, workdir):
-    """从 ISO 取 kernel/initrd 与 cmdline，返回 (vmlinuz, initrd, append)。"""
+    """从 ISO 动态定位 kernel/initrd 与 cmdline，返回 (vmlinuz, initrd, append)。"""
     for tool in ("xorriso", "qemu-system-x86_64"):
         if not shutil.which(tool):
             fail_setup("缺少工具 " + tool)
 
+    paths = xorriso_list(iso)
+    if not paths:
+        fail_setup("无法列出 ISO 文件（xorriso -find 无输出）")
+
+    def find_one(patterns):
+        for pat in patterns:
+            for p in paths:
+                if re.search(pat, p, re.I):
+                    return p
+        return None
+
+    # kernel / initrd：按文件名特征动态匹配，兼容 /live/、/isolinux/、/boot/ 等布局。
+    kpath = find_one([r"/vmlinuz[^/]*$", r"/linux$", r"/vmlinuz"])
+    ipath = find_one([r"/initrd[^/]*$", r"/initrd\.img"])
+    if not kpath or not ipath:
+        fail_setup("ISO 里找不到 kernel/initrd（文件列表：%s）" % ", ".join(paths[:20]))
+
+    # cfg：找 live.cfg 或 grub.cfg，用于提取真实 cmdline。
+    cfgpath = find_one([r"/live\.cfg$", r"/grub\.cfg$", r"/syslinux\.cfg$"])
+    append = ""
+    if cfgpath:
+        cfg = xorriso_cat(iso, cfgpath)
+        flat = cfg.replace("\\\n", " ")
+        # 兼容三种写法：syslinux 新语法 "linux <k> <args>"、老语法 "append <args>"、
+        # grub "linux <k> <args>"。抓含 boot=live 的那一行最可靠。
+        for line in flat.splitlines():
+            if "boot=live" in line:
+                # 取 boot=live 及其后的内容（去掉行首指令与 kernel 路径）。
+                idx = line.find("boot=live")
+                append = line[idx:].strip()
+                break
+        if not append:
+            # 退一步：抓 append 行或 linux 行的参数部分。
+            m = re.search(r"\b(?:append|linux)\s+\S+\s+(.*boot=live.*)", flat)
+            if m:
+                append = m.group(1).strip()
+
+    if not append:
+        log("WARN: 未能从 ISO cfg 提取 boot 参数，使用兜底 cmdline")
+        append = FALLBACK_APPEND
+
     vmlinuz = os.path.join(workdir, "vmlinuz")
     initrd = os.path.join(workdir, "initrd.img")
-
-    # 优先 BIOS 的 isolinux/live.cfg，回退 UEFI 的 grub.cfg。
-    cfg = xorriso_cat(iso, "/isolinux/live.cfg")
-    src = "isolinux"
-    if not cfg:
-        cfg = xorriso_cat(iso, "/boot/grub/grub.cfg")
-        src = "grub"
-    if not cfg:
-        fail_setup("ISO 里找不到 live.cfg / grub.cfg，无法提取启动参数")
-
-    kpath = ipath = None
-    append = ""
-
-    if src == "isolinux":
-        # 处理续行：把 "\\\n" 拼成一行。
-        flat = cfg.replace("\\\n", " ")
-        for line in flat.splitlines():
-            line = line.strip()
-            if line.startswith("kernel ") and kpath is None:
-                kpath = line.split()[1]
-            elif line.startswith("append ") and not append:
-                append = line[len("append "):].strip()
-                m = re.search(r"initrd=(\S+)", append)
-                if m:
-                    ipath = m.group(1)
-        if not append:
-            fail_setup("live.cfg 里没有 append 行")
-    else:
-        m = re.search(r"\blinux\s+(\S+)\s+([^\n]*)", cfg)
-        if m:
-            kpath, append = m.group(1), m.group(2).strip()
-        mi = re.search(r"\binitrd\s+(\S+)", cfg)
-        if mi:
-            ipath = mi.group(1)
-
-    # 兼容默认路径（有些 ISO 的 cfg 用相对写法）。
-    if not kpath:
-        kpath = "/live/vmlinuz"
-    if not ipath:
-        ipath = "/live/initrd.img"
-
     if not xorriso_extract(iso, kpath, vmlinuz):
-        if not xorriso_extract(iso, "/live/vmlinuz", vmlinuz):
-            fail_setup("提取 kernel 失败: " + kpath)
+        fail_setup("提取 kernel 失败: " + kpath)
     if not xorriso_extract(iso, ipath, initrd):
-        if not xorriso_extract(iso, "/live/initrd.img", initrd):
-            fail_setup("提取 initrd 失败: " + ipath)
+        fail_setup("提取 initrd 失败: " + ipath)
+    log("引导文件: kernel=%s initrd=%s" % (kpath, ipath))
 
-    # 去掉引导项里的 initrd=、quiet、splash、BOOT_IMAGE，保留 boot=live components 等。
+    # 去掉 quiet/splash，保留 boot=live components 等。
     append = re.sub(r"\binitrd=\S+", "", append)
     append = re.sub(r"\bBOOT_IMAGE=\S+", "", append)
     append = re.sub(r"\b(quiet|splash)\b", "", append)

@@ -69,6 +69,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Upload ISO artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: flickos-iso
