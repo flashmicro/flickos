@@ -25,16 +25,21 @@ if command -v rime_deployer >/dev/null 2>&1 && [ -d /usr/share/rime-data ]; then
     echo "cn-l10n: pre-building Rime dictionary into skel"
     RIME_SKEL="/etc/skel/.local/share/fcitx5/rime"
     RIME_STAGE="$(mktemp -d /tmp/rime-skel.XXXXXX)"
-    if rime_deployer --build "$RIME_SKEL" /usr/share/rime-data "$RIME_STAGE" >/dev/null 2>&1; then
+    RIME_ERR="$(mktemp /tmp/rime-skel-err.XXXXXX)"
+    if rime_deployer --build "$RIME_SKEL" /usr/share/rime-data "$RIME_STAGE" >"$RIME_ERR" 2>&1 \
+       && find "$RIME_STAGE" -name '*.bin' -print -quit 2>/dev/null | grep -q .; then
         rm -rf "$RIME_SKEL/build"
         mv "$RIME_STAGE" "$RIME_SKEL/build"
         echo "cn-l10n: Rime dictionary pre-built into $RIME_SKEL/build"
     else
-        echo "cn-l10n: WARNING - rime_deployer pre-build failed; will rely on first-login deploy" >&2
+        # 不要把半成品放进 skel：记录真实错误，回退到首次登录自动部署
+        echo "cn-l10n: rime_deployer pre-build did not produce .bin; keep skel clean. stderr follows:" >&2
+        sed -n '1,20p' "$RIME_ERR" >&2
+        rm -rf "$RIME_STAGE" 2>/dev/null || true
     fi
-    rm -rf "$RIME_STAGE" 2>/dev/null || true
+    rm -f "$RIME_ERR" 2>/dev/null || true
 else
-    echo "cn-l10n: WARNING - rime_deployer or /usr/share/rime-data missing; skip pre-build" >&2
+    echo "cn-l10n: rime_deployer or /usr/share/rime-data missing; skip pre-build" >&2
 fi
 
 # 4) 精确裁剪本地化文件：只删非 zh/en 的 .mo 翻译、非中英 man 页、多余拼写字典。

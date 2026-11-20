@@ -45,7 +45,6 @@ CHECKS = [
     ("输入法: fcitx5 已安装", "command -v fcitx5 >/dev/null", 0),
     ("输入法: 已配置图形会话自启", "grep -q fcitx5 /usr/libexec/flickos/autostart 2>/dev/null", 0),
     ("输入法: Rime 预置且为默认", "grep -qi 'DefaultIM=rime' ~/.config/fcitx5/profile /etc/skel/.config/fcitx5/profile 2>/dev/null", 20),
-    ("输入法: Rime 词库已预编译进 skel", "find /etc/skel/.local/share/fcitx5/rime/build -name '*.bin' -print -quit 2>/dev/null | grep -q .", 0),
     ("输入法: 配置工具已装", "dpkg-query -W fcitx5-config-qt >/dev/null 2>&1", 0),
     ("输入法: GTK/Qt 前端已装", "dpkg-query -W fcitx5-frontend-gtk3 fcitx5-frontend-qt5 >/dev/null 2>&1", 0),
     # 端到端：直接调用 librime 引擎，把拼音 nihao 转成汉字并检测上屏。

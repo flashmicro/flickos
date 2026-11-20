@@ -91,21 +91,31 @@ def main():
     with open(os.path.join(rime_dir, "default.custom.yaml"), "w", encoding="utf-8") as f:
         f.write(DEFAULT_CUSTOM)
 
-    # 首次登录时 fcitx5 会自动部署；这里用 librime 自带的 rime_deployer
-    # 预编译 schema/词库，模拟同样的部署过程（全新目录也能工作）。
+    # 优先让 librime 在 RimeInitialize 时自行部署（各版本最可靠）。
+    # rime_deployer 仅作为加速手段：失败时必须清掉可能产生的半成品 build/，
+    # 否则会破坏 RimeInitialize 的自动部署（librime 1.13 上曾因此整体 FAIL）。
     staging = os.path.join(userdir, "staging")
-    os.makedirs(staging, exist_ok=True)
     deployer = shutil.which("rime_deployer")
     if deployer:
         try:
-            subprocess.run([deployer, "--build", rime_dir, shared, staging],
-                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=60)
+            os.makedirs(staging, exist_ok=True)
+            p = subprocess.run([deployer, "--build", rime_dir, shared, staging],
+                               stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, timeout=90)
             build_dir = os.path.join(rime_dir, "build")
-            if os.path.isdir(build_dir):
-                shutil.rmtree(build_dir)
-            shutil.move(staging, build_dir)
+            if p.returncode == 0 and any(f.endswith(".bin") for f in os.listdir(staging)):
+                if os.path.isdir(build_dir):
+                    shutil.rmtree(build_dir)
+                shutil.move(staging, build_dir)
+            else:
+                # 部署失败/无产物：清理 staging，交给 RimeInitialize 自动部署
+                shutil.rmtree(staging, ignore_errors=True)
+                shutil.rmtree(build_dir, ignore_errors=True)
+                print("[info] rime_deployer 未产出词库，回退到 RimeInitialize 自动部署:",
+                      p.stderr.decode("utf-8", "replace")[:300])
         except Exception as e:
-            print(f"[warn] rime_deployer 部署失败: {e}")
+            shutil.rmtree(staging, ignore_errors=True)
+            shutil.rmtree(os.path.join(rime_dir, "build"), ignore_errors=True)
+            print(f"[info] rime_deployer 不可用，回退到自动部署: {e}")
 
     t = RimeTraits()
     t.data_size = ctypes.sizeof(RimeTraits)
