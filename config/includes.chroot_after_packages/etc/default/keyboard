@@ -1,0 +1,6 @@
+# 键盘布局：美式（输入法由 fcitx5 负责，键盘布局保持 us 避免冲突）
+XKBMODEL="pc105"
+XKBLAYOUT="us"
+XKBVARIANT=""
+XKBOPTIONS=""
+BACKSPACE="guess"

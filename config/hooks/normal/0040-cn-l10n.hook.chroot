@@ -1,0 +1,63 @@
+#!/bin/sh
+# 预制简体中文：生成 locale、同步时区软链、部署 Rime、精确裁剪非中英本地化文件。
+# 固件不在此列——完整保留（0060-trim-firmware hook 已在定制版中移除）。
+set -e
+
+# 1) 生成 en_US.UTF-8 与 zh_CN.UTF-8 双 locale
+echo "cn-l10n: generating locales"
+locale-gen
+
+# 2) /etc/timezone 已由 overlay 写入，同步 /etc/localtime 软链
+if [ -f /etc/timezone ]; then
+    tz=$(cat /etc/timezone)
+    if [ -f "/usr/share/zoneinfo/$tz" ]; then
+        ln -snf "/usr/share/zoneinfo/$tz" /etc/localtime
+        echo "cn-l10n: timezone -> $tz"
+    fi
+fi
+
+# 3) 首次部署 Rime：为 root 与 skel 用户生成默认的词库缓存。
+# 用户首次登录时 fcitx5 会按需自行部署，这里预置避免首次卡顿。
+if command -v rime_deployer >/dev/null 2>&1; then
+    echo "cn-l10n: rime deployer present (user will deploy on first login)"
+fi
+
+# 4) 精确裁剪本地化文件：只删非 zh/en 的 .mo 翻译、非中英 man 页、多余拼写字典。
+#    绝不整目录删除；保留英文基底与简体中文。
+echo "cn-l10n: trimming non-zh/en locale files"
+KEEP_LOCALE_PATTERN='^(zh|en|zh_CN|zh_TW|en_US|en_GB|en@|C|POSIX)'
+
+# 4a) /usr/share/locale/<lang>/LC_MESSAGES/*.mo：删除非 zh/en 语言目录
+if [ -d /usr/share/locale ]; then
+    find /usr/share/locale -mindepth 1 -maxdepth 1 -type d | while read -r d; do
+        lang=$(basename "$d")
+        case "$lang" in
+            zh*|en*|C|POSIX) continue ;;
+        esac
+        rm -rf "$d"
+    done
+fi
+
+# 4b) man 页：删除非中英语言目录
+for manroot in /usr/share/man; do
+    if [ -d "$manroot" ]; then
+        find "$manroot" -mindepth 1 -maxdepth 1 -type d -name '??' | while read -r d; do
+            lang=$(basename "$d")
+            case "$lang" in
+                zh*|en*) continue ;;
+            esac
+            # 只删形如 de/fr/ja/ru/... 的两字母语言目录，保留 man1..man9 等
+            case "$lang" in
+                man[0-9n]*) continue ;;
+            esac
+            rm -rf "$d"
+        done
+    fi
+done
+
+# 4c) hunspell/myspell 字典：仅保留 en_US 与简体相关
+if [ -d /usr/share/hunspell ]; then
+    find /usr/share/hunspell -maxdepth 1 -type f ! -name 'en_US.*' ! -name 'en_GB.*' -delete 2>/dev/null || true
+fi
+
+echo "cn-l10n: done"
