@@ -325,21 +325,38 @@ def main():
                 log("FAIL: 未等到登录提示（见 boot-test/serial.log）")
                 rc = 3
             else:
-                # 登录后中文密码提示经串口会变成乱码（UTF-8 被 tty 截断成 \uFFFD），
-                # 无法可靠匹配 "密码:"。且不能干等提示：login 有 60s 超时，
-                # 等满会重发 login: 提示，导致密码发错地方。
-                # 策略：发用户名后等它回显（证明已被 login 读取），随即发密码。
+                # 中文密码提示经串口变乱码（UTF-8 被 tty 截断成 \uFFFD），
+                # 无法可靠匹配 "密码:"，也不能干等满 60s（login 会超时重发提示）。
+                # 策略：发用户名→短等回显→发密码→等 shell 提示符出现（bash 就绪），
+                # 再发验证标记。关键：密码后必须等 shell 提示符，否则命令会在
+                # banner/初始化阶段被吞掉，导致误判"登录失败"。
                 pos = len(st.snapshot())
                 st.send(LIVE_USER)
                 if not st.wait(re.escape(LIVE_USER), 20, pos):
                     log("WARN: 未等到用户名回显，仍尝试发送密码")
                 time.sleep(1)  # 给 login 处理用户名、显示密码提示的时间
+                pwd_pos = len(st.snapshot())  # 发密码前的位置，之后的输出都从这里开始搜
                 st.send(LIVE_PASSWORD)
-                pos = len(st.snapshot())
-                st.send("echo __LOGIN_READY__")
-                if not st.wait(r"__LOGIN_READY__", 90, pos):
-                    log("FAIL: 登录失败（用户/密码？见 serial.log）")
-                    rc = 3
+
+                # 等 shell 提示符：user@flickos:~$ 或末尾的 $ / # 提示符。
+                # 乱码里 'user@' 与 '$' 仍是可靠 ASCII 锚点。
+                prompt = st.wait(r"user@[^\r\n]*[$#]\s", 90, pwd_pos)
+                if prompt:
+                    log("已登录，进入 shell 提示符")
+                    pos = len(st.snapshot())
+                    st.send("echo __LOGIN_READY__")
+                    if st.wait(r"__LOGIN_READY__", 30, pos):
+                        pass  # 登录确认成功
+                    else:
+                        # shell 已出现即视为登录成功；标记可能因回显/时序丢失。
+                        log("WARN: 未捕获 __LOGIN_READY__ 回显，但 shell 已就绪，继续")
+                else:
+                    # 兜底：直接尝试标记（兼容提示符格式不同的情况）。
+                    pos = len(st.snapshot())
+                    st.send("echo __LOGIN_READY__")
+                    if not st.wait(r"__LOGIN_READY__", 60, pos):
+                        log("FAIL: 登录失败（用户/密码？见 serial.log）")
+                        rc = 3
 
             if rc == 0:
                 # 2) 逐条执行 CHECKS
