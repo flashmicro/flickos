@@ -47,6 +47,9 @@ CHECKS = [
     ("输入法: Rime 预置且为默认", "grep -qi 'DefaultIM=rime' ~/.config/fcitx5/profile /etc/skel/.config/fcitx5/profile 2>/dev/null", 20),
     ("输入法: 配置工具已装", "dpkg-query -W fcitx5-config-qt >/dev/null 2>&1", 0),
     ("输入法: GTK/Qt 前端已装", "dpkg-query -W fcitx5-frontend-gtk3 fcitx5-frontend-qt5 >/dev/null 2>&1", 0),
+    # 端到端：直接调用 librime 引擎，把拼音 nihao 转成汉字并检测上屏。
+    # 首次运行会用 rime_deployer 编译词库（TCG 下可能需 1-2 分钟），故 retry=30。
+    ("中文输入: Rime 拼音→汉字上屏", "python3 /usr/local/bin/test-chinese-input.py -i nihao >/dev/null 2>&1", 30),
     ("Calamares: 已预装", "command -v calamares >/dev/null 2>&1", 0),
     ("QEMU: 已预装", "command -v qemu-system-x86_64 >/dev/null", 0),
     ("固件: 完整保留（G50-70）", "[ \"$(dpkg -l | grep -ci firmware)\" -gt 10 ]", 0),
