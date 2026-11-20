@@ -325,13 +325,15 @@ def main():
                 log("FAIL: 未等到登录提示（见 boot-test/serial.log）")
                 rc = 3
             else:
+                # 登录后中文密码提示经串口会变成乱码（UTF-8 被 tty 截断成 \uFFFD），
+                # 无法可靠匹配 "密码:"。且不能干等提示：login 有 60s 超时，
+                # 等满会重发 login: 提示，导致密码发错地方。
+                # 策略：发用户名后等它回显（证明已被 login 读取），随即发密码。
                 pos = len(st.snapshot())
                 st.send(LIVE_USER)
-                # 密码提示可能是英文 "Password:"，也可能是本地化中文 "密码："。
-                # 为稳妥起见，即便没匹配到提示也照样把密码发过去（login 会接受），
-                # 最终以 __LOGIN_READY__ 标记作为登录成功的唯一判据。
-                if not st.wait(r"[Pp]assword:|密码[：:]", 60, pos):
-                    log("WARN: 未匹配到密码提示文本（可能被本地化为中文），尝试直接发送密码")
+                if not st.wait(re.escape(LIVE_USER), 20, pos):
+                    log("WARN: 未等到用户名回显，仍尝试发送密码")
+                time.sleep(1)  # 给 login 处理用户名、显示密码提示的时间
                 st.send(LIVE_PASSWORD)
                 pos = len(st.snapshot())
                 st.send("echo __LOGIN_READY__")
