@@ -130,24 +130,44 @@ def xorriso_extract(iso, src, dst):
 
 
 def xorriso_cat(iso, path):
-    r = subprocess.run(
-        ["xorriso", "-indev", iso, "-cat", path, "-"],
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-    )
-    return r.stdout.decode("utf-8", errors="replace") if r.returncode == 0 else ""
+    """读取 ISO 内文件内容：xorriso 没有 -cat，用 -extract 到临时文件再读。"""
+    fd, tmp = tempfile.mkstemp(prefix="fckcat-")
+    os.close(fd)
+    try:
+        r = subprocess.run(
+            ["xorriso", "-osirrox", "on", "-indev", iso, "-extract", path, tmp],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+        if r.returncode != 0 or not os.path.isfile(tmp):
+            return ""
+        with open(tmp, "rb") as f:
+            return f.read().decode("utf-8", errors="replace")
+    finally:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
 
 
 def xorriso_list(iso):
-    """列出 ISO 内所有普通文件的完整路径。"""
+    """列出 ISO 内所有普通文件的完整路径。
+
+    xorriso 的 -find 不支持 GNU find 的 -print；`-find / -type f`
+    本身就会把匹配到的 iso_rr_path 打印出来，形如  '/live/vmlinuz'。
+    stdout 里还会混入 NOTE/UPDATE 等信息行，故只提取被引号包裹的绝对路径。
+    """
     r = subprocess.run(
-        ["xorriso", "-indev", iso, "-find", "/", "-type", "f", "-print"],
+        ["xorriso", "-indev", iso, "-find", "/", "-type", "f"],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE,
     )
     paths = []
     for line in r.stdout.decode("utf-8", errors="replace").splitlines():
         line = line.strip()
-        # xorriso 可能输出 "--path--" 之类标记行，只取以 / 开头的路径。
-        if line.startswith("/"):
+        # 形如  '/live/vmlinuz'  →  /live/vmlinuz
+        m = re.match(r"^'(/[^']*)'$", line)
+        if m:
+            paths.append(m.group(1))
+        elif line.startswith("/"):
             paths.append(line)
     return paths
 
