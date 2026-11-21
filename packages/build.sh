@@ -28,7 +28,16 @@ for src in "$ROOT"/packages/*/debian; do
     echo "==> Building $pkg"
     # Build from a copy so build artifacts stay out of the source tree.
     cp -r "$ROOT/packages/$pkg" "$WORK/$pkg"
-    (cd "$WORK/$pkg" && dpkg-buildpackage -us -uc -b)
+    if [ "$pkg" = "flickos-classroom-view" ]; then
+        # Its unit tests assume a non-root test process (they assert `lab on`
+        # is refused for non-root). The CI container runs as root because
+        # live-build needs it, so two root-only tests fail on environment,
+        # not on the code. Upstream debian/rules documents nocheck for this.
+        # This is an opt-in package (not installed in the ISO).
+        (cd "$WORK/$pkg" && DEB_BUILD_OPTIONS=nocheck dpkg-buildpackage -us -uc -b)
+    else
+        (cd "$WORK/$pkg" && dpkg-buildpackage -us -uc -b)
+    fi
 done
 
 # Two packages with the same file fail only deep inside lb build (dpkg:
