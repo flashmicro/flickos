@@ -1,0 +1,58 @@
+name: Build Local ISO (G50-70M)
+
+# 本机精简版：Lenovo G50-70M 专用，去掉 LibreOffice 与无用固件。
+# 仅手动触发；产物作为 artifact 上传，不创建 release、不影响 v2.2。
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: debian:trixie
+      options: --privileged
+    steps:
+      - name: Install build tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            git ca-certificates wget live-build apt-utils bzip2 file xz-utils dpkg-dev debhelper build-essential \
+            qemu-system-x86 qemu-utils xorriso python3 rsync \
+            meson pkgconf gettext libgtk-3-dev \
+            libgtk-layer-shell-dev libjson-c-dev libwayland-dev wayland-protocols \
+            arc-theme numix-icon-theme elementary-icon-theme \
+            adwaita-icon-theme adwaita-icon-theme-legacy gnome-themes-extra-data
+
+      - uses: actions/checkout@v4
+
+      - name: Apply local G50-70M variant
+        run: sh tools/make-local-g50.sh
+
+      - name: Build ISO
+        run: tools/build-iso.sh --purge
+
+      - name: Boot test
+        run: tools/boot-test.py
+
+      - name: Rename artifact and checksum
+        run: |
+          f=$(ls FlickOS-64bit-v*.iso)
+          mv "$f" FlickOS-G50-70M-zhcn.iso
+          sha256sum FlickOS-G50-70M-zhcn.iso > SHA256SUMS
+          echo "=== 本机版产物 ==="
+          ls -lh FlickOS-G50-70M-zhcn.iso SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Upload local ISO artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flickos-g50-70m-local
+          path: |
+            FlickOS-G50-70M-zhcn.iso
+            SHA256SUMS
+          retention-days: 30
+          if-no-files-found: warn
