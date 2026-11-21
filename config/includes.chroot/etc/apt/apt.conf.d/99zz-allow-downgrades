@@ -1,7 +1,0 @@
-// During a live build the locally built FlickOS packages (file:/packages)
-// can carry the same version as the ones published in FlickOS's apt repo.
-// When live-build removes the local source at the end of chroot_archives,
-// apt sees the repo's equal-version package as a "downgrade" and aborts.
-// Allowing downgrades during the build keeps that final apt step from failing.
-// On an installed system versions only go up, so this has no effect there.
-APT::Get::Allow-Downgrades "true";
