@@ -1,0 +1,8 @@
+# FlickOS live 会话的软件源（清华 TUNA 国内镜像，临时 apt install 快）。
+# 注意：构建 ISO 时用的是 deb.debian.org 官方源（auto/config 的
+# --mirror-bootstrap / --mirror-binary），本文件只覆盖启动后的 live 会话，
+# 不拖慢海外 CI 构建；装到硬盘后由 Calamares helper 写入同样的清华源。
+# 想切回官方源见 README「使用问答」Q4。
+deb https://mirrors.tuna.tsinghua.edu.cn/debian trixie main contrib non-free non-free-firmware
+deb https://mirrors.tuna.tsinghua.edu.cn/debian trixie-updates main contrib non-free non-free-firmware
+deb https://mirrors.tuna.tsinghua.edu.cn/debian-security trixie-security main contrib non-free non-free-firmware

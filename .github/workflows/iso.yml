@@ -106,23 +106,28 @@ jobs:
             直接下载下方资产 **FlickOS-64bit-v2.2-zhcn.iso**（约 1.56 GiB），无需 SourceForge。
 
             校验：`sha256sum -c SHA256SUMS`
+            下载前想核对软件版本？看下方 **flickos-amd64.packages**（完整包清单，含每个包的精确版本）。
 
             ### 主要软件版本（本 ISO 内实际安装）
             Debian 13 trixie · 内核 6.12.117 · labwc · Calamares 3.3.14 ·
             fcitx5 5.1.12 + librime 1.13.1（luna_pinyin_simp）· Noto CJK 20240730 ·
-            Firefox ESR 153.7 · LibreOffice 25.2.3 · QEMU 10.0.13。
-            完整清单见仓库 README「版本一览」。
+            Firefox ESR 153.7 · LibreOffice 25.2.3 · QEMU 10.0.13 ·
+            arch-install-scripts 28（arch-chroot 修系统）。
+            完整清单见下方 flickos-amd64.packages 或仓库 README「版本一览」。
 
             ### 中文输入
             进入桌面后按 **Ctrl+Space** 唤醒 Rime，打拼音即可选汉字（如 nihao → 你好）。
 
             ### 软件源
-            ISO 制作走 Debian 官方源（海外 CI 最快）；安装到硬盘后 `/etc/apt/sources.list`
-            自动指向清华 TUNA 国内镜像，日常更新/装软件在国内更快。想切回官方源见 README「使用问答」Q4。
+            ISO 制作走 Debian 官方源（海外 CI 下载最快）；**live 会话**与**安装到硬盘后的系统**
+            均使用清华 TUNA 国内镜像（trixie / updates / security），临时装软件或日常更新在国内都快。
+            想切回官方源见 README「使用问答」Q4。
 
             ### 使用提示
             账号 user、图形界面免密自动登录（文本终端/串口密码 live）；不自动锁屏；
             关机重启用图形菜单，或 `sudo /usr/sbin/poweroff`、`sudo /usr/sbin/reboot`。
+            系统损坏需修复时可用 `sudo arch-chroot /目标分区` 进入（arch-install-scripts 已预装）。
           files: |
             SHA256SUMS
+            flickos-amd64.packages
             FlickOS-64bit-v*.iso

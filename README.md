@@ -48,9 +48,11 @@
 
 - **制作 ISO 时**：用 Debian 官方源（`deb.debian.org`），从海外 CI 下载包最快最稳，
   与国内源无关。
-- **安装到硬盘后**：`/etc/apt/sources.list` 会自动写成**清华 TUNA 国内镜像**
-  （`mirrors.tuna.tsinghua.edu.cn`，含 main / updates / security），日常更新、
-  装软件在国内速度更快。FlickOS 自己的软件源（GitHub Pages）保持不变。
+- **ISO 启动后的 live 会话**：`/etc/apt/sources.list` 已是**清华 TUNA 国内镜像**
+  （`mirrors.tuna.tsinghua.edu.cn`，含 main / updates / security），试用时临时
+  `apt install` 软件在国内速度更快。
+- **安装到硬盘后**：同样自动写成**清华 TUNA 国内镜像**，日常更新、装软件在国内更快。
+  FlickOS 自己的软件源（GitHub Pages）保持不变。
 - **想切回官方源**（例如出国后）：把国内镜像地址替换回官方，再更新索引：
 
   ```sh
@@ -79,9 +81,10 @@
 | 浏览器 | Firefox ESR 153.7.0esr |
 | 办公套件 | LibreOffice 25.2.3 |
 | 虚拟化 | QEMU 10.0.13 |
+| 系统修复 | arch-install-scripts 28（提供 `arch-chroot`，修系统用） |
 
-> 完整清单（`flickos-amd64.packages`，含每个包及精确版本）在构建时生成；
-> 未来计划把它作为 release 资产上传，便于下载前逐项核对。
+> 完整清单（`flickos-amd64.packages`，含每个包及精确版本）**已作为 release 资产上传**，
+> 下载前可点开逐项核对。
 
 ---
 
