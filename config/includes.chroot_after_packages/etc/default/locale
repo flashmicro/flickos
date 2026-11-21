@@ -1,0 +1,4 @@
+# 系统默认简体中文，保留英文兜底（LANGUAGE 回退链）
+# 注意：不要设置 LC_ALL —— Debian 官方禁止永久设置，会覆盖所有分类并破坏兜底。
+LANG=zh_CN.UTF-8
+LANGUAGE=zh_CN:zh:en_US:en

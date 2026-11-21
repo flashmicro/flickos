@@ -1,0 +1,5 @@
+# Rime 默认补丁：简体中文输出 + 中文标点
+patch:
+  "schema_list":
+    - schema: luna_pinyin_simp
+  "menu/page_size": 7

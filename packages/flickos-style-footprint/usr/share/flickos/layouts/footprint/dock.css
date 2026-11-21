@@ -1,0 +1,116 @@
+/* Footprint's dock (sfwbar, dock.config). Named colors only: flickos-layout
+ * puts the style's palette (waybar-colors.css) before this file.
+ * window#sfwbar is the dock's window, grid#dock the box of apps,
+ * button#taskbar_popup an app (.focused, and .running while it has a window,
+ * a FlickOS patch to sfwbar), button#showapps Show Apps, window#taskbar_popup
+ * the list of an app's windows, shown on hover. */
+
+window#sfwbar {
+    background-color: alpha(@wm_bg, 0.9);
+    /* A line on the edge facing the windows, so the dock doesn't run into a
+     * dark window next to it. */
+    border-right: 1px solid alpha(@fg_color, 0.18);
+    font-family: Cantarell, sans-serif;
+}
+
+grid#dock {
+    padding: 6px 4px;
+}
+
+button#taskbar_popup,
+button#showapps {
+    min-width: 48px;
+    min-height: 48px;
+    margin: 2px 0;
+    padding: 2px;
+    border: none;
+    border-radius: 12px;
+    background: none;
+    box-shadow: none;
+    transition: background-color 150ms ease-in-out;
+}
+
+/* Show Apps at the bottom. sfwbar gives the bar's start and end parts half
+ * the dock each, and wraps every widget in an event box that takes the
+ * clicks. A vexpand on the button stretches that box over the whole half
+ * (a click anywhere above the icon opened the menu), so the button doesn't
+ * expand: the end part's box is put at the bottom and in the middle instead.
+ * The start part gets its own alignment back: without it the apps column
+ * follows the end part's. Structural selectors, as sfwbar names neither. */
+window#sfwbar > * > * > * > *:last-child > * {
+    -GtkWidget-valign: end;
+    -GtkWidget-halign: center;
+}
+
+window#sfwbar > * > * > * > *:first-child > * {
+    -GtkWidget-valign: start;
+    -GtkWidget-halign: fill;
+}
+
+button#showapps {
+    margin-bottom: 8px;
+    color: @fg_color;
+}
+
+button#taskbar_popup image,
+button#showapps image {
+    min-width: 40px;
+    min-height: 40px;
+}
+
+/* sfwbar puts an app's icon in a grid the button's width and leaves it at the
+ * left: centred, the icon sits over the dot of an open app. */
+button#taskbar_popup image {
+    -GtkWidget-hexpand: true;
+    -GtkWidget-halign: center;
+}
+
+button#showapps image {
+    -gtk-icon-style: symbolic;
+}
+
+button#taskbar_popup:hover,
+button#showapps:hover {
+    background-color: alpha(@fg_color, 0.12);
+}
+
+/* Open apps: a dot under the icon. GTK 3 draws it as a radial gradient. */
+button#taskbar_popup.running {
+    background-image: radial-gradient(circle closest-side, @fg_color 85%, transparent 100%);
+    background-size: 5px 5px;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+}
+
+button#taskbar_popup.focused {
+    background-color: alpha(@fg_color, 0.08);
+}
+
+/* An app's windows one under another: sfwbar lays this list out from its
+ * grid's direction (default right, side by side) and ignores group cols. */
+grid#taskbar_popup_grid {
+    -GtkWidget-direction: bottom;
+}
+
+window#taskbar_popup {
+    background-color: @bg_color;
+    border: 1px solid @borders;
+    border-radius: 12px;
+    padding: 6px;
+}
+
+window#taskbar_popup button#taskbar_item {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    color: @fg_color;
+}
+
+window#taskbar_popup button#taskbar_item:hover {
+    background-color: alpha(@fg_color, 0.1);
+}
+
+window#taskbar_popup button#taskbar_item.focused {
+    background-color: alpha(@selected_bg_color, 0.3);
+}

@@ -1,0 +1,137 @@
+name: Build ISO
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+    # A community app's file changes nothing in the ISO (community.yml builds it).
+    paths-ignore: ['repo/community/apps/**']
+  pull_request:
+    paths-ignore: ['repo/community/apps/**']
+  workflow_dispatch:
+
+permissions:
+  contents: write   # needed to create releases on tags
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # live-build needs root, mount and chroot, and should match the target
+    # release, so build inside a privileged Debian container.
+    container:
+      image: debian:trixie
+      options: --privileged
+    env:
+      # Repository secrets (Settings → Secrets and variables → Actions).
+      # Without them, tagged builds skip the SourceForge upload.
+      SF_USER: ${{ secrets.SF_USER }}
+      SF_SSH_PRIVATE_KEY: ${{ secrets.SF_SSH_PRIVATE_KEY }}
+    steps:
+      # live-build only Recommends apt-utils (apt-ftparchive for the medium's
+      # pool), bzip2, file and xz-utils, but runs them.
+      - name: Install build tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            git ca-certificates wget live-build apt-utils bzip2 file xz-utils dpkg-dev debhelper build-essential \
+            devscripts reprepro rsync openssh-client openssl \
+            qemu-system-x86 qemu-utils ovmf xorriso python3 \
+            meson pkgconf gettext \
+            libgtk-3-dev sassc libglib2.0-bin \
+            libgtk-layer-shell-dev libjson-c-dev libwayland-dev wayland-protocols \
+            libgnutls28-dev libaml-dev libdrm-dev libgbm-dev libpixman-1-dev \
+            libturbojpeg0-dev libxxhash-dev zlib1g-dev \
+            arc-theme numix-icon-theme elementary-icon-theme \
+            adwaita-icon-theme adwaita-icon-theme-legacy gnome-themes-extra-data
+
+      - uses: actions/checkout@v4
+
+      - name: Check tag matches FlickOS version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          . packages/flickos-branding/usr/lib/flickos-release
+          if [ "${GITHUB_REF_NAME}" != "v${FLICKOS_VERSION}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} doesn't match FLICKOS_VERSION ${FLICKOS_VERSION} in packages/flickos-branding/usr/lib/flickos-release"
+            exit 1
+          fi
+
+      - name: Build ISO
+        run: tools/build-iso.sh --purge
+
+      - name: Boot test
+        run: tools/boot-test.py
+
+      - name: Upload boot test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: boot-test
+          path: |
+            boot-test/
+            build.log
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Upload ISO artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flickos-iso
+          path: |
+            FlickOS-64bit-v*.iso
+            SHA256SUMS
+          retention-days: 7
+          compression-level: 0
+
+      # Release files go to SourceForge, where FlickOS is distributed
+      # (GitHub release assets are limited to 2 GB).
+      - name: Upload release to SourceForge
+        if: startsWith(github.ref, 'refs/tags/v') && env.SF_SSH_PRIVATE_KEY != ''
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SF_SSH_PRIVATE_KEY" > ~/.ssh/id_sourceforge
+          chmod 600 ~/.ssh/id_sourceforge
+          ssh-keyscan frs.sourceforge.net >> ~/.ssh/known_hosts
+          printf 'Host frs.sourceforge.net\n  IdentityFile ~/.ssh/id_sourceforge\n' > ~/.ssh/config
+          tools/upload-release.sh
+
+      - name: Publish GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          body: |
+            ## FlickOS v2.3 简体中文定制版
+
+            基于上游 FlickOS 2.3（Debian 13 trixie + labwc）的轻量级 Wayland 桌面，预制简体中文：
+            中文界面、Noto CJK 字体、fcitx5 + Rime（luna_pinyin_simp）输入法，开箱即用。
+            2.3 带来新壁纸/字体、自带登录与锁屏、面板媒体控制与天气、三套桌面布局、
+            「从 Windows 迁移」工具等，底层仍是 Debian 13 trixie。
+
+            ### 下载
+            直接下载下方资产 **FlickOS-64bit-v2.3-zhcn.iso**（约 1.5 GiB），无需 SourceForge。
+
+            校验：`sha256sum -c SHA256SUMS`
+            下载前想核对软件版本？看下方 **flickos-amd64.packages**（完整包清单，含每个包的精确版本）。
+
+            ### 主要软件版本（本 ISO 内实际安装）
+            Debian 13 trixie · labwc · Calamares · fcitx5 + librime（luna_pinyin_simp）·
+            Noto CJK · Firefox ESR · LibreOffice · QEMU · arch-install-scripts（arch-chroot 修系统）。
+            精确版本见下方 flickos-amd64.packages 或仓库 README「版本一览」。
+
+            ### 中文输入
+            进入桌面后按 **Ctrl+Space** 唤醒 Rime，打拼音即可选汉字（如 nihao → 你好）。
+
+            ### 软件源
+            ISO 制作走 Debian 官方源（海外 CI 下载最快）；**live 会话**与**安装到硬盘后的系统**
+            均使用清华 TUNA 国内镜像（trixie / updates / security），临时装软件或日常更新在国内都快。
+            想切回官方源见 README「使用问答」Q4。
+
+            ### 使用提示
+            账号 user、图形界面免密自动登录（文本终端/串口密码 live）；不自动锁屏；
+            关机重启用图形菜单，或 `sudo /usr/sbin/poweroff`、`sudo /usr/sbin/reboot`。
+            系统损坏需修复时可用 `sudo arch-chroot /目标分区` 进入（arch-install-scripts 已预装）。
+          files: |
+            SHA256SUMS
+            flickos-amd64.packages
+            FlickOS-64bit-v*.iso

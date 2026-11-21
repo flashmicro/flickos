@@ -1,0 +1,220 @@
+Source: flickos-desktop
+Section: metapackages
+Priority: optional
+Maintainer: Jon <dvbondoy@gmail.com>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+
+Package: flickos-desktop
+Architecture: all
+# Depends: the session breaks without these.
+# flickos-archive-keyring >= 1.7, flickos-control >= 1.64: apps bought from the
+# FlickOS store update with the automatic updates, and a refund never stops
+# them (docs/design/flickos-store.md, ADR-004).
+Depends: flickos-archive-keyring (>= 1.7),
+         flickos-settings (>= 1.52),
+         flickos-layouts (>= 1.89),
+         flickos-branding (>= 1.3),
+         labwc,
+         xwayland,
+         waybar,
+         swaybg,
+         mako-notifier,
+         xdg-desktop-portal,
+         xdg-desktop-portal-wlr,
+         xdg-desktop-portal-gtk,
+         mate-polkit,
+         polkitd,
+         dbus-user-session,
+         pipewire,
+         pipewire-audio,
+         pipewire-pulse,
+         wireplumber,
+# rtkit: real-time priority for sound. PipeWire only Recommends it, and without
+# it sound breaks up under load. flickos-settings (>= 1.50) makes PipeWire use it.
+         rtkit,
+         network-manager,
+         network-manager-applet,
+         udisks2,
+         gvfs,
+         adwaita-icon-theme,
+         fonts-dejavu-core,
+         flickos-cursor,
+         flickos-theme (>= 1.0~test1),
+         unattended-upgrades,
+         waypaper,
+         flick-tiler (>= 1.14),
+         flickos-shortcuts,
+         flickos-control (>= 1.81),
+         systemd-timesyncd,
+         xdg-terminal-exec,
+         flickos-greeter,
+# flickos-menu: the start menu, the apps button's default (flickos-layouts
+# >= 1.23); nothing of it runs while a user has it off. A Depends so
+# installed systems get it: FlickOS doesn't install new Recommends.
+         flickos-menu (>= 1.0),
+# flickos-welcome: the window a new account sees once at its first login. A
+# Depends so installed systems get it; nothing of it runs afterwards.
+         flickos-welcome,
+# flickos-phone: pages, files and text from and to a phone. Off by default,
+# and nothing of it runs while off. A Depends so installed systems get it
+# (docs/design/flickos-phone.md, ADR-002).
+         flickos-phone (>= 1.32),
+# flickos-screenshot: screenshots (the Print keys, Super+Shift+S, the menus).
+# Nothing of it runs until a key is pressed (docs/design/flickos-screenshot.md,
+# ADR-002). A Depends so installed systems get it; flickos-settings (>= 1.31)'s
+# keys run it.
+         flickos-screenshot (>= 1.10),
+# flickos-countme: the anonymous weekly count (PRIVACY.md). A Depends so
+# installed systems get it: new installs are asked in the installer, systems
+# installed before it are counted until they turn it off in Settings ->
+# Privacy (opt-out).
+         flickos-countme,
+# brightness-udev: brightnessctl's udev rule, which lets the video group
+# (every FlickOS account and the live user) set the backlight. Without it the
+# brightness keys and Quick Settings' slider do nothing: Debian's brightnessctl
+# doesn't go through logind. A Depends so installed systems get it.
+         brightness-udev,
+# flickos-software: Software, the window that installs and removes Debian's
+# and Flathub's apps; it replaces gnome-packagekit's gpk-application (design
+# ADR-010). A Depends so installed systems get it; nothing of it runs while
+# the window is closed, except a daily timer that updates Flatpak apps.
+         flickos-software (>= 1.23),
+# flickos-recovery: a restore point before every software change, on the btrfs
+# layout new installs get; on ext4 nothing of it runs (the apt hook leaves at
+# once). A Depends so installed systems get it (docs/design/flickos-recovery.md,
+# ADR-006).
+         flickos-recovery,
+# flickos-lock: FlickOS's own lock screen, which flickos-control (>= 1.48) runs
+# for Super+L, the menus and the idle lock; swaylock (its Depends) takes over
+# whenever it can't. Nothing of it runs while the screen is unlocked. A Depends
+# so installed systems get it; a swaylock config of the user's keeps swaylock
+# (docs/design/flickos-lock.md, ADR-009).
+         flickos-lock (>= 1.5),
+# flickos-media: media controls in the panel and a sound spectrum above it.
+# Off by default, and nothing of it runs while off; with it cava (about
+# 2.4 MB with SDL2) is in the image. A Depends so installed systems get it
+# (docs/design/flickos-media.md, ADR-001).
+         flickos-media (>= 1.8),
+# flickos-weather: the weather in the panel, from Open-Meteo for a place the
+# user picks. Off by default: nothing of it runs or is sent while off
+# (PRIVACY.md). A Depends so installed systems get it
+# (docs/design/flickos-weather.md, ADR-001).
+         flickos-weather (>= 1.3),
+# flickos-kits: the Tool Kits window, to install the opt-in developer kits and
+# set them up (git, an SSH key, Rust). Nothing is installed or runs until a kit
+# is chosen. A Depends so installed systems get it
+# (docs/design/flickos-dev.md, ADR-002).
+         flickos-kits (>= 1.0),
+# flickos-hooks: your own programs, run when the screen locks or unlocks or
+# the computer wakes up (~/.config/flickos/hooks/EVENT.d/). Nothing runs and
+# nothing is added to login while there are no hooks. A Depends so installed
+# systems get it (docs/design/flickos-hooks.md, ADR-004). The programs that
+# fire its events are pinned too: flickos-lock (locked, unlocked),
+# flickos-control (woke, changed), flickos-layouts (screens, changed),
+# flickos-phone (phone-*, changed), flickos-screenshot (screenshot, recording,
+# changed), flick-tiler, flickos-media, flickos-weather and flickos-software
+# (changed). Older ones would leave those hooks unused.
+         flickos-hooks (>= 1.1),
+# flickos-switch: Bring Files from Windows, copying an account's folders
+# from a Windows disk, read only. Nothing of it runs until it is opened; in
+# the live session it saves files to a USB drive before Windows is erased.
+# A Depends so installed systems get it (docs/design/flickos-switch.md,
+# ADR-001).
+         flickos-switch (>= 1.0),
+# file: xdg-open's type of a local file or folder. labwc is no desktop
+# xdg-utils knows, so it asks `file` (or Perl's mimetype, its Recommends,
+# which would bring in Perl); without either the type is empty and xdg-open
+# gives the path to the web browser: Show in Folder and Settings' folder
+# buttons opened Firefox. 79 KB; libmagic is in the image already.
+         file,
+# zstd: initramfs-tools' COMPRESS=zstd needs the zstd program; without it
+# update-initramfs falls back to gzip, which makes a larger initramfs that
+# GRUB reads and the kernel unpacks more slowly at every start
+# (docs/design/flickos-recovery.md, phase 1a). A Depends so installed systems
+# get it; their next initramfs rebuild uses it.
+         zstd,
+# unzip, zip, 7zip: Xarchiver and Thunar's Extract Here and Create Archive
+# open .zip with unzip, make .zip with zip, and open and make .7z with 7zip;
+# Xarchiver only Recommends them, so without them .zip and .7z were
+# "not supported". A Depends so installed systems get them (about 1 MB for
+# zip and unzip, 7 MB for 7zip).
+         unzip,
+         zip,
+         7zip,
+         ${misc:Depends}
+# Recommends: removable apps and tools. Users can uninstall any of these
+# without apt also removing flickos-desktop.
+Recommends: foot,
+            fuzzel,
+            thunar,
+# thunar-archive-plugin: Extract Here and Create Archive in Thunar's menu,
+# through xarchiver (which ships the plugin's xarchiver.tap).
+            thunar-archive-plugin,
+            gvfs-backends,
+            firefox-esr,
+            webext-ublock-origin-firefox,
+            mousepad,
+            ristretto,
+# tumbler: ristretto's thumbnail bar (it warns at every start without it).
+# D-Bus activated, runs only while an app asks for thumbnails.
+            tumbler,
+            evince,
+            vlc,
+            libreoffice-writer,
+            libreoffice-calc,
+            libreoffice-impress,
+            libreoffice-draw,
+            libreoffice-gtk3,
+            hunspell-en-us,
+            hyphen-en-us,
+            xarchiver,
+            pavucontrol,
+            nm-connection-editor,
+            wpasupplicant,
+            intel-microcode,
+            amd64-microcode,
+            wdisplays,
+            bluez,
+            blueman,
+            cups,
+            system-config-printer,
+            swayidle,
+            swaylock,
+            wlr-randr,
+            grim,
+            slurp,
+            wl-clipboard,
+            cliphist,
+            wlsunset,
+            playerctl,
+            libnotify-bin,
+            xdg-utils,
+            brightnessctl,
+            gnome-themes-extra,
+            nwg-look,
+            fonts-noto-color-emoji,
+            zram-tools,
+            flatpak,
+            gnome-package-updater,
+            ufw,
+            sudo,
+            locales,
+            console-setup,
+            ca-certificates,
+            curl,
+            lxtask,
+# fastfetch: system info with the FlickOS logo (flickos-branding's
+# /etc/xdg/fastfetch/config.jsonc), the tool users show in screenshots of
+# their desktop. 2 MB with libyyjson0; runs only when typed.
+            fastfetch,
+            nano,
+            less,
+            pciutils,
+            usbutils
+Description: FlickOS desktop environment (metapackage)
+ Installs the complete FlickOS labwc desktop: compositor, panel,
+ notifications, portals, PipeWire audio, networking, Bluetooth, printing,
+ automatic security updates and default applications (Firefox ESR,
+ LibreOffice, VLC, Mousepad, Ristretto, Evince, Xarchiver, GNOME PackageKit).

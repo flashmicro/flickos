@@ -1,0 +1,3 @@
+# 仅生成英文基底与简体中文两个 locale
+en_US.UTF-8 UTF-8
+zh_CN.UTF-8 UTF-8

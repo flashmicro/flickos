@@ -1,0 +1,63 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: flickos-layouts
+Upstream-Contact: Jon <dvbondoy@gmail.com>
+Source: https://github.com/Flick-OS/flickos
+
+Files: *
+Copyright: 2026 Jon <dvbondoy@gmail.com>
+License: GPL-3+
+
+Files: artwork/wallpaper-dark.svg
+       artwork/wallpaper-light.svg
+       usr/share/backgrounds/flickos/flickos-dark.png
+       usr/share/backgrounds/flickos/flickos-light.png
+Copyright: 2026 Jon <dvbondoy@gmail.com>
+License: GPL-3+
+Comment: The FlickOS name and logo are trademarks of the FlickOS
+ maintainer. As an additional term under section 7(e) of the GPL-3, no
+ rights under trademark law are granted for them: a changed system must
+ use its own name and logo. The policy is TRADEMARKS.md in FlickOS's
+ source repository.
+
+Files: usr/share/flickos/styles/dark/wallpaper.png
+       usr/share/flickos/styles/light/wallpaper.png
+       usr/share/flickos/layouts/*/preview.png
+Copyright: Lance Asper (https://unsplash.com/photos/3P3NHLZGCp8)
+License: Unsplash
+Comment: The Dark and Light styles' wallpaper, scaled down, and the login
+ screen's. The layouts' previews are FlickOS's drawings on that picture. The
+ Unsplash License is not a free-software license (see below), but these
+ files are fine to redistribute as part of FlickOS.
+
+Files: usr/share/backgrounds/flickos/*.jpg
+Copyright: Unsplash photographers (names not recorded)
+License: Unsplash
+Comment: The layouts' wallpapers until flickos-layouts 1.37, kept as choices
+ in waypaper. The Unsplash License is not a free-software license (it
+ forbids building a competing photo service), so these files could not go
+ into Debian main. They are fine to redistribute as part of FlickOS.
+
+License: GPL-3+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ On Debian systems, the complete text of the GNU General Public License
+ version 3 can be found in "/usr/share/common-licenses/GPL-3".
+
+License: Unsplash
+ Photos from https://unsplash.com, used under the Unsplash License
+ (https://unsplash.com/license):
+ .
+ Unsplash grants you an irrevocable, nonexclusive, worldwide copyright
+ license to download, copy, modify, distribute, perform, and use photos
+ from Unsplash for free, including for commercial purposes, without
+ permission from or attributing the photographer or Unsplash. This
+ license does not include the right to compile photos from Unsplash to
+ replicate a similar or competing service.

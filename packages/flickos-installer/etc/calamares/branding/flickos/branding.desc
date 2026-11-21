@@ -1,0 +1,47 @@
+---
+# FlickOS installer branding. Reference: https://calamares.io/docs/branding
+# Images are placeholders from tools/make-placeholder-art.sh.
+componentName:  flickos
+
+welcomeStyleCalamares:  true
+welcomeExpandingLogo:   true
+windowExpanding:        normal
+windowSize:             800px,580px
+windowPlacement:        center
+
+strings:
+    productName:         FlickOS
+    shortProductName:    FlickOS
+    # Must match FLICKOS_VERSION in packages/flickos-branding/usr/lib/flickos-release
+    # (tools/build-iso.sh checks this).
+    version:             "2.3"
+    shortVersion:        "2.3"
+    versionedName:       "FlickOS 2.3"
+    shortVersionedName:  "FlickOS 2.3"
+    # Used as the GRUB menu entry and EFI directory name.
+    bootloaderEntryName: FlickOS
+    # Links on the welcome page (enabled in modules/welcome.conf).
+    productUrl:          "https://flickos.org/"
+    supportUrl:          "https://github.com/Flick-OS/flickos/issues"
+    knownIssuesUrl:      "https://github.com/Flick-OS/flickos/issues"
+    releaseNotesUrl:     "https://flickos.org/releases/"
+    donateUrl:           "https://flickos.org/donate/"
+
+sidebar:     widget
+navigation:  widget
+
+images:
+    productLogo:     "logo.png"
+    productIcon:     "logo.png"
+    productWelcome:  "welcome.png"
+
+slideshow:     "show.qml"
+slideshowAPI:  2
+
+# Arc-Dark: title-bar background and text; the current step in FlickOS's brand
+# amber with Arc-Dark's #2f343f on it.
+style:
+    SidebarBackground:         "#2f343f"
+    SidebarText:               "#d3dae3"
+    SidebarTextCurrent:        "#2f343f"
+    SidebarBackgroundCurrent:  "#ffb13d"

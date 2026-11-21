@@ -1,0 +1,18 @@
+#!/usr/bin/make -f
+
+# The tests import usr/bin/flickos-countme; no bytecode next to installed files.
+export PYTHONDONTWRITEBYTECODE = 1
+
+%:
+	dh $@
+
+# Skipped with DEB_BUILD_OPTIONS=nocheck.
+override_dh_auto_test:
+	python3 -m unittest discover -s tests -v
+
+# The package never starts the count itself (installing or upgrading sends
+# nothing), but it enables the timer and starts it again after an upgrade:
+# --no-start on the timer too stopped it at every upgrade until the next boot.
+override_dh_installsystemd:
+	dh_installsystemd --no-start flickos-countme.service
+	dh_installsystemd flickos-countme.timer

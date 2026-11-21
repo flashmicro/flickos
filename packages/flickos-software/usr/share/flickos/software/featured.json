@@ -1,0 +1,35 @@
+{
+  "v": 1,
+  "shelves": [
+    {
+      "id": "flickos",
+      "name": "Made for FlickOS",
+      "apps": []
+    },
+    {
+      "id": "start",
+      "name": "Apps to start with",
+      "apps": [
+        "org.gimp.GIMP", "org.inkscape.Inkscape", "org.kde.krita", "org.kde.kdenlive",
+        "org.audacityteam.Audacity", "com.obsproject.Studio", "org.mozilla.Thunderbird",
+        "org.blender.Blender", "com.calibre_ebook.calibre", "org.keepassxc.KeePassXC",
+        "org.shotcut.Shotcut", "org.gnome.Boxes"
+      ]
+    },
+    {
+      "id": "styles",
+      "name": "Styles for your desktop",
+      "apps": ["io.github.dvbondoy.flickos.styles.Seven", "io.github.dvbondoy.flickos.styles.Aye3",
+               "io.github.dvbondoy.flickos.styles.Footprint", "io.github.dvbondoy.flickos.styles.Elemental",
+               "io.github.dvbondoy.flickos.styles.Experience", "io.github.dvbondoy.flickos.styles.Eleven",
+               "io.github.dvbondoy.flickos.styles.Tortuga"]
+    },
+    {
+      "id": "kits",
+      "name": "Tools for developers",
+      "apps": ["io.github.dvbondoy.flickos.kits.base", "io.github.dvbondoy.flickos.kits.python",
+               "io.github.dvbondoy.flickos.kits.web", "io.github.dvbondoy.flickos.kits.c",
+               "io.github.dvbondoy.flickos.kits.containers"]
+    }
+  ]
+}
