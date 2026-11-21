@@ -20,7 +20,7 @@ jobs:
           apt-get update
           apt-get install -y --no-install-recommends \
             git ca-certificates wget live-build apt-utils bzip2 file xz-utils dpkg-dev debhelper build-essential \
-            qemu-system-x86 qemu-utils xorriso python3 rsync \
+            qemu-system-x86 qemu-utils xorriso python3 rsync openssh-client openssl \
             meson pkgconf gettext libgtk-3-dev \
             libgtk-layer-shell-dev libjson-c-dev libwayland-dev wayland-protocols \
             arc-theme numix-icon-theme elementary-icon-theme \
@@ -54,5 +54,6 @@ jobs:
           path: |
             FlickOS-G50-70M-zhcn.iso
             SHA256SUMS
+            build.log
           retention-days: 30
           if-no-files-found: warn
