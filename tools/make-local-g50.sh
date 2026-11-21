@@ -11,11 +11,12 @@
 #         Calamares 安装器、清华源（live + 装机后）。
 #
 # G50-70M 实际硬件（Linux 探测报告 probe 0b1a40c724）：
-#   显卡 Intel Haswell HD4400 (i915) + NVIDIA GF117M/820M (nouveau)
-#   有线 Realtek RTL8111 (r8169)，无线 Realtek RTL8723BE (rtl8723be)
-#   蓝牙 Realtek RTL8723B (btusb)，声卡 Intel HD Audio (snd_hda_intel)
-# 同型号可能换装 Intel 3160 / Broadcom 43142 / Atheros QCNFA335 无线卡，
-# 故这四家的无线固件都保留，避免换卡后无法上网。
+#   显卡只用 Intel Haswell HD4400 (i915)；NVIDIA GF117M/820M 固件去掉
+#   （Optimus 屏幕接核显，nouveau 对老卡支持差，去掉不影响图形且省电）
+#   无线 Realtek RTL8723BE (rtl8723be) + 蓝牙 RTL8723B (btusb)
+#   有线 RTL8111 固件与无线同在 firmware-realtek 包内（几十 KB，无法分离）
+# 极简策略（用户机器固定、不换硬件：无线只保留 Realtek，去掉 Intel/Broadcom/Atheros
+# 备选无线固件；去掉 NVIDIA/AMD 显卡固件、服务器级固件）。
 # ============================================================================
 set -e
 
@@ -54,16 +55,18 @@ cat > config/hooks/normal/0600-local-g50-trim.hook.chroot <<'TRIMEOF'
 # 在 packages 安装后、squashfs 打包前运行；用 --purge 连配置文件一起删。
 set -e
 
-# —— 必须保留（本机硬件 + 同型号可能换装的网卡）——
-# firmware-realtek    : RTL8723BE 无线 + RTL8111 有线 + 蓝牙（本机实际）
-# firmware-iwlwifi    : Intel 3160（备选无线卡）
-# firmware-brcm80211  : Broadcom BCM43142（备选无线卡）
-# firmware-atheros    : Atheros QCNFA335（备选无线卡）
-# firmware-nvidia-graphics / firmware-amd-graphics : 显卡（保留两家以防换卡）
-# firmware-intel-graphics / -sound / -misc : Intel 核显/声卡/蓝牙等
+# —— 只保留本机实际在用的固件（用户机器固定、不换硬件）——
+# firmware-realtek        : RTL8723BE 无线 + RTL8111 有线 + RTL8723B 蓝牙（含在同包）
+# firmware-intel-graphics : Intel HD4400 核显（本机唯一显示输出，保留）
+# firmware-intel-sound / -misc : Intel 声卡等
 # intel-microcode / amd64-microcode : CPU 微码
-# —— 删除：服务器/企业级/大型阵列/老设备固件，G50-70M 绝无可能用到 ——
-DROP="firmware-netronome firmware-marvell-prestera firmware-nvidia-tesla-535-gsp
+# —— 删除：所有本机用不到的固件 ——
+# 备选无线（不换卡）：iwlwifi / brcm80211 / atheros
+# 独显（只用 Intel 核显）：nvidia-graphics / amd-graphics
+# 服务器/企业/大型阵列/老设备：netronome / marvell / tesla / mediatek 等
+DROP="firmware-iwlwifi firmware-brcm80211 firmware-atheros
+      firmware-nvidia-graphics firmware-amd-graphics
+      firmware-netronome firmware-marvell-prestera firmware-nvidia-tesla-535-gsp
       firmware-mediatek firmware-qlogic firmware-myricom firmware-netxen
       firmware-bnx2 firmware-bnx2x firmware-cavium firmware-siano
       firmware-zd1211 firmware-ipw2x00 firmware-libertas firmware-misc-nonfree
@@ -83,17 +86,20 @@ else
     echo "local-g50: no listed firmware packages installed, skip"
 fi
 
-# 顺手删除 /lib/firmware 里已无包管理的孤立大文件（如 nvidia tesla gsp）
-# 只删明确的服务器级固件目录，不碰网卡/显卡。
-rm -rf /lib/firmware/nvidia/tesla* 2>/dev/null || true
+# 顺手删除 /lib/firmware 里已无包管理的孤立固件文件
+# 只删明确用不到的目录：服务器级 + NVIDIA/AMD 独显 + 备选无线卡，不碰 realtek/intel。
+rm -rf /lib/firmware/nvidia 2>/dev/null || true
 rm -rf /lib/firmware/netronome 2>/dev/null || true
 rm -rf /lib/firmware/marvell/prestera* 2>/dev/null || true
+rm -rf /lib/firmware/iwlwifi 2>/dev/null || true
+rm -rf /lib/firmware/brcm 2>/dev/null || true
+rm -rf /lib/firmware/ath10k /lib/firmware/ath6k /lib/firmware/ath9k_htc 2>/dev/null || true
 
 echo "local-g50: remaining firmware packages: $(dpkg -l 2>/dev/null | grep -ci firmware)"
 
-# 保护性重装：确保本机 + 备选网卡/显卡固件一定在（autoremove 可能误删）
-KEEP="firmware-realtek firmware-iwlwifi firmware-brcm80211 firmware-atheros \
-      firmware-nvidia-graphics firmware-amd-graphics firmware-intel-graphics \
+# 保护性重装：确保本机实际在用的固件一定在（autoremove 可能误删）
+# 只留 Realtek（无线+蓝牙+有线）+ Intel 核显/声卡/杂项；CPU 微码不属于 firmware 包。
+KEEP="firmware-realtek firmware-intel-graphics \
       firmware-intel-sound firmware-intel-misc"
 need=""
 for p in $KEEP; do
