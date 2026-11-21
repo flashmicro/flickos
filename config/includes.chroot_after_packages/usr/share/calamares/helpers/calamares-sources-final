@@ -1,0 +1,38 @@
+#!/bin/sh
+#
+# Writes the final sources.list file for the INSTALLED system.
+#
+# Design: the ISO itself is built from Debian's official mirror (fast and
+# reliable from CI overseas, see auto/config --mirror-binary), but the system
+# Calamares puts on disk uses a domestic mirror (TUNA) so day-to-day apt is
+# fast in China. Same components as the image (auto/config --archive-areas:
+# contrib and non-free are present); no backports (--backports false).
+#
+# To switch this installed system back to the official mirror, see the README
+# "使用问答" (one-line sed commands) or run:
+#   sudo sed -i 's#https://mirrors.tuna.tsinghua.edu.cn/debian#http://deb.debian.org/debian#g; \
+#                s#https://mirrors.tuna.tsinghua.edu.cn/debian-security#http://security.debian.org/debian-security#g' \
+#                /etc/apt/sources.list && sudo apt update
+
+CHROOT=$(mount | grep proc | grep calamares | awk '{print $3}' | sed -e "s#/proc##g")
+RELEASE="trixie"
+COMPONENTS="main contrib non-free non-free-firmware"
+MIRROR="https://mirrors.tuna.tsinghua.edu.cn/debian"
+SECURITY="https://mirrors.tuna.tsinghua.edu.cn/debian-security"
+
+cat << EOF > $CHROOT/etc/apt/sources.list
+# See https://wiki.debian.org/SourcesList for more information.
+# FlickOS's own repository is in /etc/apt/sources.list.d/flickos.sources.
+# Debian mirror: TUNA (domestic, fast in China). To go back to the official
+# mirror see README "使用问答".
+deb $MIRROR $RELEASE $COMPONENTS
+deb-src $MIRROR $RELEASE $COMPONENTS
+
+deb $MIRROR $RELEASE-updates $COMPONENTS
+deb-src $MIRROR $RELEASE-updates $COMPONENTS
+
+deb $SECURITY $RELEASE-security $COMPONENTS
+deb-src $SECURITY $RELEASE-security $COMPONENTS
+EOF
+
+exit 0

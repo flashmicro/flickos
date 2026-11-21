@@ -109,6 +109,14 @@ jobs:
 
             ### 中文输入
             进入桌面后按 **Ctrl+Space** 唤醒 Rime，打拼音即可选汉字（如 nihao → 你好）。
+
+            ### 软件源
+            ISO 制作走 Debian 官方源（海外 CI 最快）；安装到硬盘后 `/etc/apt/sources.list`
+            自动指向清华 TUNA 国内镜像，日常更新/装软件在国内更快。想切回官方源见 README「使用问答」Q4。
+
+            ### 使用提示
+            账号 user、图形界面免密自动登录（文本终端/串口密码 live）；不自动锁屏；
+            关机重启用图形菜单，或 `sudo /usr/sbin/poweroff`、`sudo /usr/sbin/reboot`。
           files: |
             SHA256SUMS
             FlickOS-64bit-v*.iso

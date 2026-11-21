@@ -43,6 +43,23 @@
   live 会话 sudo 免密；若提示密码，输入 `live`。
 - **方法三**：先 `sudo -i` 切到 root，再直接敲 `poweroff` 或 `reboot`。
 
+**Q4：软件源是国内源还是国外源？**
+
+- **制作 ISO 时**：用 Debian 官方源（`deb.debian.org`），从海外 CI 下载包最快最稳，
+  与国内源无关。
+- **安装到硬盘后**：`/etc/apt/sources.list` 会自动写成**清华 TUNA 国内镜像**
+  （`mirrors.tuna.tsinghua.edu.cn`，含 main / updates / security），日常更新、
+  装软件在国内速度更快。FlickOS 自己的软件源（GitHub Pages）保持不变。
+- **想切回官方源**（例如出国后）：把国内镜像地址替换回官方，再更新索引：
+
+  ```sh
+  sudo sed -i \
+    -e 's#https://mirrors.tuna.tsinghua.edu.cn/debian-security#http://security.debian.org/debian-security#g' \
+    -e 's#https://mirrors.tuna.tsinghua.edu.cn/debian#http://deb.debian.org/debian#g' \
+    /etc/apt/sources.list
+  sudo apt update
+  ```
+
 ---
 
 FlickOS is a lightweight Linux distribution. Version **2.0** is based on

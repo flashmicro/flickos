@@ -4,22 +4,30 @@
 #
 # Same components as the image's sources (auto/config: --archive-areas), since
 # the image has contrib and non-free packages; no backports (--backports false).
+#
+# The ISO is built from Debian's official mirror (fast from overseas CI), but
+# the INSTALLED system uses TUNA (domestic, fast in China). See README 使用问答
+# for one-line commands to switch back to the official mirror.
 
 CHROOT=$(mount | grep proc | grep calamares | awk '{print $3}' | sed -e "s#/proc##g")
 RELEASE="trixie"
 COMPONENTS="main contrib non-free non-free-firmware"
+MIRROR="https://mirrors.tuna.tsinghua.edu.cn/debian"
+SECURITY="https://mirrors.tuna.tsinghua.edu.cn/debian-security"
 
 cat << EOF > $CHROOT/etc/apt/sources.list
 # See https://wiki.debian.org/SourcesList for more information.
 # FlickOS's own repository is in /etc/apt/sources.list.d/flickos.sources.
-deb http://deb.debian.org/debian $RELEASE $COMPONENTS
-deb-src http://deb.debian.org/debian $RELEASE $COMPONENTS
+# Debian mirror: TUNA (domestic, fast in China). To go back to the official
+# mirror see README "使用问答".
+deb $MIRROR $RELEASE $COMPONENTS
+deb-src $MIRROR $RELEASE $COMPONENTS
 
-deb http://deb.debian.org/debian $RELEASE-updates $COMPONENTS
-deb-src http://deb.debian.org/debian $RELEASE-updates $COMPONENTS
+deb $MIRROR $RELEASE-updates $COMPONENTS
+deb-src $MIRROR $RELEASE-updates $COMPONENTS
 
-deb http://security.debian.org/debian-security/ $RELEASE-security $COMPONENTS
-deb-src http://security.debian.org/debian-security/ $RELEASE-security $COMPONENTS
+deb $SECURITY $RELEASE-security $COMPONENTS
+deb-src $SECURITY $RELEASE-security $COMPONENTS
 EOF
 
 exit 0
