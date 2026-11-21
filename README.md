@@ -1,4 +1,16 @@
-# FlickOS
+# FlickOS（简体中文定制版）
+
+> **本仓库是 FlickOS 2.2 的简体中文定制分支**：预制中文界面、Noto CJK 字体、
+> fcitx5 + Rime（luna_pinyin_simp）输入法，开箱即用。
+>
+> - **下载 ISO**：从本仓库 [Releases](https://github.com/flashmicro/flickos/releases)
+>   下载 `FlickOS-64bit-v2.2-zhcn.iso`（约 1.56 GiB），用附带的 `SHA256SUMS` 校验。
+> - **中文输入**：进入桌面后按 **Ctrl+Space** 唤醒 Rime，打拼音选汉字（如 nihao → 你好）。
+> - **固件**：打包时保留完整固件（含 non-free-firmware），适配更多硬件。
+>
+> 下方为上游 FlickOS 原始说明。
+
+---
 
 FlickOS is a lightweight Linux distribution. Version **2.0** is based on
 Debian 13 (trixie) with a Wayland desktop built on [labwc](https://labwc.github.io/),
