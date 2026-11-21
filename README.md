@@ -8,6 +8,7 @@
 > - **中文输入**：进入桌面后按 **Ctrl+Space** 唤醒 Rime，打拼音选汉字（如 nihao → 你好）。
 > - **固件**：打包时保留完整固件（含 non-free-firmware），适配更多硬件。
 > - **账号密码 / 锁屏 / 关机重启**：见下方「使用问答」。
+> - **主要软件版本**：见下方「版本一览」（下载前可查看）。
 >
 > 下方为上游 FlickOS 原始说明。
 
@@ -59,6 +60,28 @@
     /etc/apt/sources.list
   sudo apt update
   ```
+
+## 版本一览（下载前可查看）
+
+以下为 **v2.2 中文版 ISO 内实际安装**的版本（取自该次构建的 `build.log`，非仓库候选版本）。
+每次重新构建会随 Debian trixie 更新，此处以当次 release 为准。
+
+| 软件 | 版本 |
+|---|---|
+| 基础系统 | Debian 13 (trixie)，live-boot 20250815 |
+| Linux 内核 | 6.12.117-1 |
+| 桌面 | labwc（Wayland） |
+| 安装器 | Calamares 3.3.14 |
+| 输入法框架 | fcitx5 5.1.12 |
+| Rime 引擎 | librime 1.13.1（fcitx5-rime 5.1.10） |
+| 简体词库 | rime-data-luna-pinyin（luna_pinyin_simp） |
+| 中文字体 | Noto CJK 20240730 |
+| 浏览器 | Firefox ESR 153.7.0esr |
+| 办公套件 | LibreOffice 25.2.3 |
+| 虚拟化 | QEMU 10.0.13 |
+
+> 完整清单（`flickos-amd64.packages`，含每个包及精确版本）在构建时生成；
+> 未来计划把它作为 release 资产上传，便于下载前逐项核对。
 
 ---
 

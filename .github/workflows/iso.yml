@@ -107,6 +107,12 @@ jobs:
 
             校验：`sha256sum -c SHA256SUMS`
 
+            ### 主要软件版本（本 ISO 内实际安装）
+            Debian 13 trixie · 内核 6.12.117 · labwc · Calamares 3.3.14 ·
+            fcitx5 5.1.12 + librime 1.13.1（luna_pinyin_simp）· Noto CJK 20240730 ·
+            Firefox ESR 153.7 · LibreOffice 25.2.3 · QEMU 10.0.13。
+            完整清单见仓库 README「版本一览」。
+
             ### 中文输入
             进入桌面后按 **Ctrl+Space** 唤醒 Rime，打拼音即可选汉字（如 nihao → 你好）。
 
