@@ -1,14 +1,16 @@
 # FlickOS（简体中文定制版）
 
-> **本仓库是 FlickOS 2.2 的简体中文定制分支**：预制中文界面、Noto CJK 字体、
-> fcitx5 + Rime（luna_pinyin_simp）输入法，开箱即用。
+> **本仓库是 FlickOS 2.3 的简体中文定制分支**：预制中文界面、Noto CJK 字体、
+> fcitx5 + Rime（luna_pinyin_simp）输入法，开箱即用；基于上游 2.3（Debian 13 trixie）。
 >
 > - **下载 ISO**：从本仓库 [Releases](https://github.com/flashmicro/flickos/releases)
->   下载 `FlickOS-64bit-v2.2-zhcn.iso`（约 1.56 GiB），用附带的 `SHA256SUMS` 校验。
+>   下载 `FlickOS-64bit-v2.3-zhcn.iso`（约 1.5 GiB），用附带的 `SHA256SUMS` 校验。
 > - **中文输入**：进入桌面后按 **Ctrl+Space** 唤醒 Rime，打拼音选汉字（如 nihao → 你好）。
 > - **固件**：打包时保留完整固件（含 non-free-firmware），适配更多硬件。
-> - **账号密码 / 锁屏 / 关机重启**：见下方「使用问答」。
-> - **主要软件版本**：见下方「版本一览」（下载前可查看）。
+> - **账号密码 / 锁屏 / 关机重启 / 软件源**：见下方「使用问答」。
+>
+> 2.3 相比 2.2 带来新壁纸/字体、自带登录与锁屏、面板媒体控制与天气、三套桌面布局、
+> 「从 Windows 迁移」工具等；底层仍是 Debian 13 trixie + labwc，中文补丁完全兼容。
 >
 > 下方为上游 FlickOS 原始说明。
 
@@ -33,7 +35,8 @@
 
 - 现象：直接敲 `poweroff`、`reboot`、`shutdown` 会报 `command not found`。
 - 原因：这些命令在 `/usr/sbin/`，普通用户的 `$PATH` 不包含该目录。
-- **方法一（推荐，最简单）**：图形界面点菜单里的「关机 / 重启」，不用敲命令、不用密码。
+- **方法一（推荐）**：图形界面点菜单里的「关机 / 重启」，不用敲命令、不用密码。
+  （2.3 自带登录/锁屏界面上也有 Shut Down / Restart 按钮。）
 - **方法二**：命令行用绝对路径加 sudo：
 
   ```sh
@@ -46,14 +49,12 @@
 
 **Q4：软件源是国内源还是国外源？**
 
-- **制作 ISO 时**：用 Debian 官方源（`deb.debian.org`），从海外 CI 下载包最快最稳，
-  与国内源无关。
-- **ISO 启动后的 live 会话**：`/etc/apt/sources.list` 已是**清华 TUNA 国内镜像**
-  （`mirrors.tuna.tsinghua.edu.cn`，含 main / updates / security），试用时临时
-  `apt install` 软件在国内速度更快。
-- **安装到硬盘后**：同样自动写成**清华 TUNA 国内镜像**，日常更新、装软件在国内更快。
-  FlickOS 自己的软件源（GitHub Pages）保持不变。
-- **想切回官方源**（例如出国后）：把国内镜像地址替换回官方，再更新索引：
+- **制作 ISO 时**：用 Debian 官方源（`deb.debian.org`），从海外 CI 下载包最快最稳。
+- **ISO 启动后的 live 会话**：`/etc/apt/sources.list` 已是**清华 TUNA 国内镜像**，
+  试用时临时 `apt install` 软件在国内速度更快。
+- **安装到硬盘后**：同样自动写成**清华 TUNA 国内镜像**，FlickOS 自己的软件源
+  （GitHub Pages）保持不变。
+- **想切回官方源**：
 
   ```sh
   sudo sed -i \
@@ -65,28 +66,23 @@
 
 ## 版本一览（下载前可查看）
 
-以下为 **v2.2 中文版 ISO 内实际安装**的版本（取自该次构建的 `build.log`，非仓库候选版本）。
-每次重新构建会随 Debian trixie 更新，此处以当次 release 为准。
+以下为 **v2.3 中文版 ISO 内实际安装**的版本，首次构建后据 `build.log` 填入。
+每次重新构建会随 Debian trixie 更新，以当次 release 为准。
 
 | 软件 | 版本 |
 |---|---|
-| 基础系统 | Debian 13 (trixie)，live-boot 20250815 |
-| Linux 内核 | 6.12.117-1 |
+| 基础系统 | Debian 13 (trixie) |
 | 桌面 | labwc（Wayland） |
-| 安装器 | Calamares 3.3.14 |
-| 输入法框架 | fcitx5 5.1.12 |
-| Rime 引擎 | librime 1.13.1（fcitx5-rime 5.1.10） |
-| 简体词库 | rime-data-luna-pinyin（luna_pinyin_simp） |
-| 中文字体 | Noto CJK 20240730 |
-| 浏览器 | Firefox ESR 153.7.0esr |
-| 办公套件 | LibreOffice 25.2.3 |
-| 虚拟化 | QEMU 10.0.13 |
-| 系统修复 | arch-install-scripts 28（提供 `arch-chroot`，修系统用） |
+| 输入法 | fcitx5 + librime（luna_pinyin_simp） |
+| 中文字体 | Noto CJK |
+| 浏览器 | Firefox ESR |
+| 固件 | 完整保留（含 non-free-firmware） |
 
-> 完整清单（`flickos-amd64.packages`，含每个包及精确版本）**已作为 release 资产上传**，
-> 下载前可点开逐项核对。
+> 完整清单（`flickos-amd64.packages`）作为 release 资产上传，可下载前逐项核对。
 
 ---
+
+# 上游 FlickOS 原始说明
 
 FlickOS is a lightweight Linux distribution. Version **2.0** is based on
 Debian 13 (trixie) with a Wayland desktop built on [labwc](https://labwc.github.io/),

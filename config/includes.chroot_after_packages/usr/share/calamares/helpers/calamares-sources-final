@@ -15,7 +15,9 @@
 #                /etc/apt/sources.list && sudo apt update
 
 CHROOT=$(mount | grep proc | grep calamares | awk '{print $3}' | sed -e "s#/proc##g")
-RELEASE="trixie"
+# 跟随上游 2.3：从 live 系统 os-release 动态读取 Debian 代号，避免写死。
+RELEASE="$(. /etc/os-release && echo "$VERSION_CODENAME")"
+[ -n "$RELEASE" ] || { echo "No VERSION_CODENAME in /etc/os-release" >&2; exit 1; }
 COMPONENTS="main contrib non-free non-free-firmware"
 MIRROR="https://mirrors.tuna.tsinghua.edu.cn/debian"
 SECURITY="https://mirrors.tuna.tsinghua.edu.cn/debian-security"

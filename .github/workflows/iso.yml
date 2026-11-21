@@ -34,9 +34,13 @@ jobs:
           apt-get update
           apt-get install -y --no-install-recommends \
             git ca-certificates wget live-build apt-utils bzip2 file xz-utils dpkg-dev debhelper build-essential \
-            qemu-system-x86 qemu-utils xorriso python3 rsync openssh-client openssl \
-            meson pkgconf gettext libgtk-3-dev \
+            devscripts reprepro rsync openssh-client openssl \
+            qemu-system-x86 qemu-utils ovmf xorriso python3 python3-pil python3-gi libglib2.0-dev-bin \
+            meson pkgconf gettext \
+            libgtk-3-dev sassc libglib2.0-bin \
             libgtk-layer-shell-dev libjson-c-dev libwayland-dev wayland-protocols \
+            libgnutls28-dev libaml-dev libdrm-dev libgbm-dev libpixman-1-dev \
+            libturbojpeg0-dev libxxhash-dev zlib1g-dev \
             arc-theme numix-icon-theme elementary-icon-theme \
             adwaita-icon-theme adwaita-icon-theme-legacy gnome-themes-extra-data
 
@@ -97,23 +101,23 @@ jobs:
         with:
           generate_release_notes: true
           body: |
-            ## FlickOS v2.2 简体中文定制版
+            ## FlickOS v2.3 简体中文定制版
 
-            基于 Debian 13 (trixie) + labwc 的轻量级 Wayland 桌面，预制简体中文：
+            基于上游 FlickOS 2.3（Debian 13 trixie + labwc）的轻量级 Wayland 桌面，预制简体中文：
             中文界面、Noto CJK 字体、fcitx5 + Rime（luna_pinyin_simp）输入法，开箱即用。
+            2.3 带来新壁纸/字体、自带登录与锁屏、面板媒体控制与天气、三套桌面布局、
+            「从 Windows 迁移」工具等，底层仍是 Debian 13 trixie。
 
             ### 下载
-            直接下载下方资产 **FlickOS-64bit-v2.2-zhcn.iso**（约 1.56 GiB），无需 SourceForge。
+            直接下载下方资产 **FlickOS-64bit-v2.3-zhcn.iso**（约 1.5 GiB），无需 SourceForge。
 
             校验：`sha256sum -c SHA256SUMS`
             下载前想核对软件版本？看下方 **flickos-amd64.packages**（完整包清单，含每个包的精确版本）。
 
             ### 主要软件版本（本 ISO 内实际安装）
-            Debian 13 trixie · 内核 6.12.117 · labwc · Calamares 3.3.14 ·
-            fcitx5 5.1.12 + librime 1.13.1（luna_pinyin_simp）· Noto CJK 20240730 ·
-            Firefox ESR 153.7 · LibreOffice 25.2.3 · QEMU 10.0.13 ·
-            arch-install-scripts 28（arch-chroot 修系统）。
-            完整清单见下方 flickos-amd64.packages 或仓库 README「版本一览」。
+            Debian 13 trixie · labwc · Calamares · fcitx5 + librime（luna_pinyin_simp）·
+            Noto CJK · Firefox ESR · LibreOffice · QEMU · arch-install-scripts（arch-chroot 修系统）。
+            精确版本见下方 flickos-amd64.packages 或仓库 README「版本一览」。
 
             ### 中文输入
             进入桌面后按 **Ctrl+Space** 唤醒 Rime，打拼音即可选汉字（如 nihao → 你好）。

@@ -1,7 +1,7 @@
 name: Build Local ISO (G50-70M)
 
 # 本机精简版：Lenovo G50-70M 专用，去掉 LibreOffice 与无用固件。
-# 仅手动触发；产物作为 artifact 上传，不创建 release、不影响 v2.2。
+# 仅手动触发；产物作为 artifact 上传，不创建 release、不影响 v2.3。
 on:
   workflow_dispatch:
 
@@ -20,9 +20,13 @@ jobs:
           apt-get update
           apt-get install -y --no-install-recommends \
             git ca-certificates wget live-build apt-utils bzip2 file xz-utils dpkg-dev debhelper build-essential \
-            qemu-system-x86 qemu-utils xorriso python3 rsync openssh-client openssl \
-            meson pkgconf gettext libgtk-3-dev \
+            devscripts reprepro rsync openssh-client openssl \
+            qemu-system-x86 qemu-utils ovmf xorriso python3 python3-pil python3-gi libglib2.0-dev-bin \
+            meson pkgconf gettext \
+            libgtk-3-dev sassc libglib2.0-bin \
             libgtk-layer-shell-dev libjson-c-dev libwayland-dev wayland-protocols \
+            libgnutls28-dev libaml-dev libdrm-dev libgbm-dev libpixman-1-dev \
+            libturbojpeg0-dev libxxhash-dev zlib1g-dev \
             arc-theme numix-icon-theme elementary-icon-theme \
             adwaita-icon-theme adwaita-icon-theme-legacy gnome-themes-extra-data
 

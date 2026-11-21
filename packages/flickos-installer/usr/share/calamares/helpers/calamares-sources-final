@@ -1,16 +1,23 @@
 #!/bin/sh
 #
-# Writes the final sources.list file
+# Writes the final sources.list file for the INSTALLED system.
 #
-# Same components as the image's sources (auto/config: --archive-areas), since
-# the image has contrib and non-free packages; no backports (--backports false).
+# Design: the ISO itself is built from Debian's official mirror (fast and
+# reliable from CI overseas, see auto/config --mirror-binary), but the system
+# Calamares puts on disk uses a domestic mirror (TUNA) so day-to-day apt is
+# fast in China. Same components as the image (auto/config --archive-areas:
+# contrib and non-free are present); no backports (--backports false).
 #
-# The ISO is built from Debian's official mirror (fast from overseas CI), but
-# the INSTALLED system uses TUNA (domestic, fast in China). See README 使用问答
-# for one-line commands to switch back to the official mirror.
+# To switch this installed system back to the official mirror, see the README
+# "使用问答" (one-line sed commands) or run:
+#   sudo sed -i 's#https://mirrors.tuna.tsinghua.edu.cn/debian#http://deb.debian.org/debian#g; \
+#                s#https://mirrors.tuna.tsinghua.edu.cn/debian-security#http://security.debian.org/debian-security#g' \
+#                /etc/apt/sources.list && sudo apt update
 
 CHROOT=$(mount | grep proc | grep calamares | awk '{print $3}' | sed -e "s#/proc##g")
-RELEASE="trixie"
+# 跟随上游 2.3：从 live 系统 os-release 动态读取 Debian 代号，避免写死。
+RELEASE="$(. /etc/os-release && echo "$VERSION_CODENAME")"
+[ -n "$RELEASE" ] || { echo "No VERSION_CODENAME in /etc/os-release" >&2; exit 1; }
 COMPONENTS="main contrib non-free non-free-firmware"
 MIRROR="https://mirrors.tuna.tsinghua.edu.cn/debian"
 SECURITY="https://mirrors.tuna.tsinghua.edu.cn/debian-security"
